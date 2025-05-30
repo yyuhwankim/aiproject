@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || 'AIzaSyDZ7419rQQowomI7mqQrjxMxvBd0SnbNeo';
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export default async function handler(
