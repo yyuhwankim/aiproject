@@ -13,7 +13,11 @@ export default async function handler(
   }
 
   if (!API_KEY) {
-    return res.status(500).json({ message: 'API key is not configured' });
+    console.error('API key is not configured in environment variables');
+    return res.status(500).json({ 
+      message: 'API key is not configured',
+      error: 'Please check your environment variables. Make sure NEXT_PUBLIC_GOOGLE_API_KEY is set in your Vercel project settings or .env.local file.'
+    });
   }
 
   try {
