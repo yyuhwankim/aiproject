@@ -24,6 +24,38 @@ export default function Home() {
     setHistory(savedHistory.problems);
   }, []);
 
+  const scrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const startPosition = window.pageYOffset;
+      const distance = targetPosition - startPosition;
+      const duration = 1000; // 1초
+      let start: number | null = null;
+
+      const easeInOutCubic = (t: number) => {
+        return t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      };
+
+      const animation = (currentTime: number) => {
+        if (start === null) start = currentTime;
+        const timeElapsed = currentTime - start;
+        const progress = Math.min(timeElapsed / duration, 1);
+        const easedProgress = easeInOutCubic(progress);
+        
+        window.scrollTo(0, startPosition + distance * easedProgress);
+
+        if (timeElapsed < duration) {
+          requestAnimationFrame(animation);
+        }
+      };
+
+      requestAnimationFrame(animation);
+    }
+  };
+
   const generateProblem = async () => {
     if (!topic.trim()) {
       setError('수학 주제를 입력해주세요.');
@@ -57,6 +89,7 @@ export default function Home() {
       setSolution(data.solution);
       setShowSolution(false);
       setIsCorrect(null);
+      setTimeout(() => scrollToElement('problem-section'), 100);
     } catch (error) {
       console.error('Error generating problem:', error);
       setError(error.message || '문제 생성 중 오류가 발생했습니다.');
@@ -105,30 +138,9 @@ export default function Home() {
     }
   };
 
-  const scrollToSolution = () => {
-    const solutionElement = document.getElementById('solution-section');
-    if (solutionElement) {
-      solutionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const scrollToSimilarProblem = () => {
-    const similarProblemElement = document.getElementById('similar-problem-section');
-    if (similarProblemElement) {
-      similarProblemElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   const handleShowSolution = () => {
     setShowSolution(true);
-    setTimeout(scrollToSolution, 100);
-  };
-
-  const scrollToProblemGeneration = () => {
-    const problemGenerationElement = document.getElementById('problem-generation');
-    if (problemGenerationElement) {
-      problemGenerationElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setTimeout(() => scrollToElement('solution-section'), 100);
   };
 
   const handleCorrectness = (correct: boolean) => {
@@ -142,7 +154,12 @@ export default function Home() {
       });
       setHistory(prev => [savedProblem, ...prev]);
     }
-    setTimeout(scrollToProblemGeneration, 100);
+    setTimeout(() => scrollToElement('difficulty-section'), 100);
+  };
+
+  const handleDifficultySelect = (difficulty: ProblemDifficulty) => {
+    setSelectedDifficulty(difficulty);
+    setTimeout(() => scrollToElement('retry-section'), 100);
   };
 
   const renderMath = (text: string) => {
@@ -245,7 +262,7 @@ export default function Home() {
 
             {problem && (
               <div className="bg-white rounded-2xl shadow-xl p-8">
-                <div className="mb-8">
+                <div id="problem-section" className="mb-8">
                   <h2 className="text-2xl font-bold text-gray-800 mb-4">문제</h2>
                   <div className="bg-gray-50 rounded-xl p-6">
                     <div className="text-lg text-gray-700 whitespace-pre-wrap">
@@ -290,17 +307,17 @@ export default function Home() {
                 )}
 
                 {isCorrect !== null && (
-                  <div id="similar-problem-section" className="text-center mt-12">
+                  <div className="text-center mt-12">
                     <p className={`text-xl font-semibold mb-4 ${
                       isCorrect ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {isCorrect ? '정답입니다! 🎉' : '다시 한번 도전해보세요! 💪'}
                     </p>
-                    <div className="mb-4">
+                    <div id="difficulty-section" className="mb-4">
                       <p className="text-gray-700 mb-2">문제 난이도를 선택해주세요:</p>
                       <div className="flex justify-center gap-4">
                         <button
-                          onClick={() => setSelectedDifficulty('easy')}
+                          onClick={() => handleDifficultySelect('easy')}
                           className={`px-4 py-2 rounded-lg ${
                             selectedDifficulty === 'easy'
                               ? 'bg-green-500 text-white'
@@ -310,7 +327,7 @@ export default function Home() {
                           쉬운 문제
                         </button>
                         <button
-                          onClick={() => setSelectedDifficulty('similar')}
+                          onClick={() => handleDifficultySelect('similar')}
                           className={`px-4 py-2 rounded-lg ${
                             selectedDifficulty === 'similar'
                               ? 'bg-blue-500 text-white'
@@ -320,7 +337,7 @@ export default function Home() {
                           비슷한 문제
                         </button>
                         <button
-                          onClick={() => setSelectedDifficulty('hard')}
+                          onClick={() => handleDifficultySelect('hard')}
                           className={`px-4 py-2 rounded-lg ${
                             selectedDifficulty === 'hard'
                               ? 'bg-red-500 text-white'
@@ -331,15 +348,17 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => generateSimilarProblem(problem)}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105"
-                    >
-                      <span>문제 다시 풀기</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+                    <div id="retry-section">
+                      <button
+                        onClick={() => generateSimilarProblem(problem)}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105"
+                      >
+                        <span>문제 다시 풀기</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -369,7 +388,7 @@ export default function Home() {
                     onClick={() => {
                       setShowHistory(false);
                       generateSimilarProblem(item.problem);
-                      setTimeout(scrollToProblemGeneration, 100);
+                      setTimeout(scrollToElement, 100);
                     }}
                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
                   >
