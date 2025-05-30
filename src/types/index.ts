@@ -1,10 +1,12 @@
+export type ProblemDifficulty = 'easy' | 'similar' | 'hard';
+
 export interface MathProblem {
   id: string;
   topic: string;
   problem: string;
   solution: string;
   isCorrect: boolean;
-  timestamp: number;
+  timestamp: string;
 }
 
 export interface ProblemHistory {
@@ -20,6 +22,4 @@ export interface UserStats {
       correct: number;
     };
   };
-}
-
-export type ProblemDifficulty = 'easy' | 'similar' | 'hard'; 
+} 

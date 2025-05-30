@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { MathProblem, ProblemDifficulty, UserStats } from '../types';
-import { saveProblem, getProblemHistory, getUserStats } from '../utils/storage';
+import { MathProblem, ProblemDifficulty } from '../types';
+import { saveProblem, getProblemHistory } from '../utils/storage';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 
@@ -15,11 +15,6 @@ export default function Home() {
   const [history, setHistory] = useState<MathProblem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<UserStats>({
-    totalProblems: 0,
-    correctAnswers: 0,
-    topicStats: {},
-  });
   const [selectedDifficulty, setSelectedDifficulty] = useState<ProblemDifficulty>('similar');
   const [isClient, setIsClient] = useState(false);
 
@@ -27,7 +22,6 @@ export default function Home() {
     setIsClient(true);
     const savedHistory = getProblemHistory();
     setHistory(savedHistory.problems);
-    setStats(getUserStats());
   }, []);
 
   const generateProblem = async () => {
@@ -130,6 +124,13 @@ export default function Home() {
     setTimeout(scrollToSolution, 100);
   };
 
+  const scrollToProblemGeneration = () => {
+    const problemGenerationElement = document.getElementById('problem-generation');
+    if (problemGenerationElement) {
+      problemGenerationElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleCorrectness = (correct: boolean) => {
     setIsCorrect(correct);
     if (problem && solution) {
@@ -141,7 +142,7 @@ export default function Home() {
       });
       setHistory(prev => [savedProblem, ...prev]);
     }
-    setTimeout(scrollToSimilarProblem, 100);
+    setTimeout(scrollToProblemGeneration, 100);
   };
 
   const renderMath = (text: string) => {
@@ -179,36 +180,6 @@ export default function Home() {
           </p>
         </div>
 
-        {isClient && (
-          <div className="max-w-4xl mx-auto mb-8">
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">학습 통계</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-2">전체 통계</h3>
-                  <p className="text-gray-600">총 문제 수: {stats.totalProblems}</p>
-                  <p className="text-gray-600">정답률: {stats.totalProblems > 0 
-                    ? Math.round((stats.correctAnswers / stats.totalProblems) * 100) 
-                    : 0}%</p>
-                </div>
-                <div className="bg-indigo-50 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">주제별 통계</h3>
-                  {Object.entries(stats.topicStats).map(([topic, stat]) => (
-                    <div key={topic} className="mb-2">
-                      <p className="text-gray-700 font-medium">{topic}</p>
-                      <p className="text-gray-600">
-                        정답률: {stat.total > 0 
-                          ? Math.round((stat.correct / stat.total) * 100) 
-                          : 0}% ({stat.correct}/{stat.total})
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-center mb-8">
           <button
             onClick={() => setShowHistory(!showHistory)}
@@ -227,7 +198,7 @@ export default function Home() {
         
         {!showHistory ? (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div id="problem-generation" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
               <div className="mb-6">
                 <label htmlFor="topic" className="block text-lg font-medium text-gray-700 mb-3">
                   수학 주제 입력
@@ -395,7 +366,11 @@ export default function Home() {
                     {renderMath(item.problem)}
                   </div>
                   <button
-                    onClick={() => generateSimilarProblem(item.problem)}
+                    onClick={() => {
+                      setShowHistory(false);
+                      generateSimilarProblem(item.problem);
+                      setTimeout(scrollToProblemGeneration, 100);
+                    }}
                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
                   >
                     <span>비슷한 문제 다시 풀기</span>
