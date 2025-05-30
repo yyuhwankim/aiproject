@@ -28,7 +28,7 @@ export default async function handler(
 문제 기록:
 ${JSON.stringify(problems, null, 2)}
 
-다음 형식으로 분석 결과를 JSON 형태로 제공해주세요:
+다음 형식으로 분석 결과를 JSON 형태로 제공해주세요. 반드시 유효한 JSON 형식을 지켜주세요:
 {
   "strengths": [
     {
@@ -59,16 +59,59 @@ ${JSON.stringify(problems, null, 2)}
 2. 정답률이 50% 미만인 주제는 약점으로 분류
 3. 추천사항은 구체적이고 실천 가능한 내용으로 작성
 4. 전체 통계는 모든 문제를 종합적으로 분석
+5. 반드시 유효한 JSON 형식을 지켜주세요
 `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const analysis = JSON.parse(response.text());
+    const text = response.text();
+
+    // JSON 문자열에서 실제 JSON 부분만 추출
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Invalid response format from AI');
+    }
+
+    const jsonStr = jsonMatch[0];
+    let analysis;
+    try {
+      analysis = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Failed to parse AI response:', text);
+      throw new Error('Failed to parse AI response');
+    }
+
+    // 응답 데이터 유효성 검사
+    if (!analysis.strengths || !analysis.weaknesses || !analysis.recommendations || !analysis.overallStats) {
+      throw new Error('Invalid analysis data structure');
+    }
+
+    // 숫자 데이터 정규화
+    analysis.strengths = analysis.strengths.map((s: any) => ({
+      ...s,
+      correctRate: Number(s.correctRate),
+      totalProblems: Number(s.totalProblems)
+    }));
+
+    analysis.weaknesses = analysis.weaknesses.map((w: any) => ({
+      ...w,
+      correctRate: Number(w.correctRate),
+      totalProblems: Number(w.totalProblems)
+    }));
+
+    analysis.overallStats = {
+      ...analysis.overallStats,
+      totalProblems: Number(analysis.overallStats.totalProblems),
+      averageCorrectRate: Number(analysis.overallStats.averageCorrectRate)
+    };
 
     res.status(200).json(analysis);
   } catch (error) {
     console.error('Error analyzing learning data:', error);
-    res.status(500).json({ error: 'Failed to analyze learning data' });
+    res.status(500).json({ 
+      error: 'Failed to analyze learning data',
+      details: error.message 
+    });
   }
 } 

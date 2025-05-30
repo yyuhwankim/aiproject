@@ -185,7 +185,12 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '분석 중 오류가 발생했습니다.');
+        throw new Error(data.details || data.error || '분석 중 오류가 발생했습니다.');
+      }
+
+      // 데이터 유효성 검사
+      if (!data.strengths || !data.weaknesses || !data.recommendations || !data.overallStats) {
+        throw new Error('분석 결과가 올바르지 않습니다.');
       }
 
       setAnalysis(data);
@@ -193,6 +198,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error analyzing learning data:', error);
       setError(error.message || '분석 중 오류가 발생했습니다.');
+      setShowAnalysis(false);
     } finally {
       setIsAnalyzing(false);
     }
