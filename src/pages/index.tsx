@@ -313,7 +313,9 @@ export default function Home() {
                     </span>
                   </div>
                   <h3 className="text-xl font-semibold text-gray-800 mb-3">{item.topic}</h3>
-                  <p className="text-gray-700 mb-4">{item.problem}</p>
+                  <div className="text-gray-700 mb-4">
+                    {renderMath(item.problem)}
+                  </div>
                   <button
                     onClick={() => generateSimilarProblem(item.problem)}
                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"

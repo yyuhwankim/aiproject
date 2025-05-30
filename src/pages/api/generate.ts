@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const API_KEY = 'AIzaSyDZ7419rQQowomI7mqQrjxMxvBd0SnbNeo';
+const API_KEY = process.env.GOOGLE_API_KEY;
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export default async function handler(
@@ -9,6 +9,10 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  if (!API_KEY) {
+    return res.status(500).json({ message: 'API key is not configured' });
   }
 
   try {
