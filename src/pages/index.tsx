@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { MathProblem } from '../types';
-import { saveProblem, getProblemHistory } from '../utils/storage';
+import { MathProblem, ProblemDifficulty } from '../types';
+import { saveProblem, getProblemHistory, getUserStats } from '../utils/storage';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 
@@ -15,10 +15,13 @@ export default function Home() {
   const [history, setHistory] = useState<MathProblem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState(getUserStats());
+  const [selectedDifficulty, setSelectedDifficulty] = useState<ProblemDifficulty>('similar');
 
   useEffect(() => {
     const savedHistory = getProblemHistory();
     setHistory(savedHistory.problems);
+    setStats(getUserStats());
   }, []);
 
   const generateProblem = async () => {
@@ -66,13 +69,17 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     try {
-      console.log('Sending request to generate similar problem:', { problem: originalProblem, topic });
+      console.log('Sending request to generate similar problem:', { problem: originalProblem, topic, difficulty: selectedDifficulty });
       const response = await fetch('/api/similar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ problem: originalProblem, topic }),
+        body: JSON.stringify({ 
+          problem: originalProblem, 
+          topic,
+          difficulty: selectedDifficulty 
+        }),
       });
       
       const data = await response.json();
@@ -164,6 +171,34 @@ export default function Home() {
           <p className="text-gray-600 text-lg text-center max-w-2xl">
             AI 기반 수학 문제 생성 및 학습 지원 서비스로 수학 실력을 향상시켜보세요
           </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="bg-white rounded-2xl shadow-xl p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">학습 통계</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-blue-50 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">전체 통계</h3>
+                <p className="text-gray-600">총 문제 수: {stats.totalProblems}</p>
+                <p className="text-gray-600">정답률: {stats.totalProblems > 0 
+                  ? Math.round((stats.correctAnswers / stats.totalProblems) * 100) 
+                  : 0}%</p>
+              </div>
+              <div className="bg-indigo-50 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-indigo-800 mb-2">주제별 통계</h3>
+                {Object.entries(stats.topicStats).map(([topic, stat]) => (
+                  <div key={topic} className="mb-2">
+                    <p className="text-gray-700 font-medium">{topic}</p>
+                    <p className="text-gray-600">
+                      정답률: {stat.total > 0 
+                        ? Math.round((stat.correct / stat.total) * 100) 
+                        : 0}% ({stat.correct}/{stat.total})
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-center mb-8">
@@ -282,11 +317,46 @@ export default function Home() {
                     }`}>
                       {isCorrect ? '정답입니다! 🎉' : '다시 한번 도전해보세요! 💪'}
                     </p>
+                    <div className="mb-4">
+                      <p className="text-gray-700 mb-2">문제 난이도를 선택해주세요:</p>
+                      <div className="flex justify-center gap-4">
+                        <button
+                          onClick={() => setSelectedDifficulty('easy')}
+                          className={`px-4 py-2 rounded-lg ${
+                            selectedDifficulty === 'easy'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          쉬운 문제
+                        </button>
+                        <button
+                          onClick={() => setSelectedDifficulty('similar')}
+                          className={`px-4 py-2 rounded-lg ${
+                            selectedDifficulty === 'similar'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          비슷한 문제
+                        </button>
+                        <button
+                          onClick={() => setSelectedDifficulty('hard')}
+                          className={`px-4 py-2 rounded-lg ${
+                            selectedDifficulty === 'hard'
+                              ? 'bg-red-500 text-white'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          어려운 문제
+                        </button>
+                      </div>
+                    </div>
                     <button
                       onClick={() => generateSimilarProblem(problem)}
                       className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105"
                     >
-                      <span>비슷한 문제 다시 풀기</span>
+                      <span>문제 다시 풀기</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                       </svg>

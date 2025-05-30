@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const API_KEY = process.env.GOOGLE_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export default async function handler(
@@ -12,7 +12,11 @@ export default async function handler(
   }
 
   if (!API_KEY) {
-    return res.status(500).json({ message: 'API key is not configured' });
+    console.error('API key is not configured');
+    return res.status(500).json({ 
+      message: 'API key is not configured',
+      error: 'Please check your environment variables'
+    });
   }
 
   try {
