@@ -22,4 +22,23 @@ export interface UserStats {
       correct: number;
     };
   };
+}
+
+export interface LearningAnalysis {
+  strengths: {
+    topic: string;
+    correctRate: number;
+    totalProblems: number;
+  }[];
+  weaknesses: {
+    topic: string;
+    correctRate: number;
+    totalProblems: number;
+  }[];
+  recommendations: string[];
+  overallStats: {
+    totalProblems: number;
+    averageCorrectRate: number;
+    mostFrequentTopics: string[];
+  };
 } 

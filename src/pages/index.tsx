@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { MathProblem, ProblemDifficulty } from '../types';
+import { MathProblem, ProblemDifficulty, LearningAnalysis } from '../types';
 import { saveProblem, getProblemHistory } from '../utils/storage';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -17,6 +17,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<ProblemDifficulty>('similar');
   const [isClient, setIsClient] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysis, setAnalysis] = useState<LearningAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -162,6 +165,39 @@ export default function Home() {
     setTimeout(() => scrollToElement('retry-section'), 100);
   };
 
+  const analyzeLearning = async () => {
+    if (history.length === 0) {
+      setError('분석할 문제 기록이 없습니다.');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ problems: history }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '분석 중 오류가 발생했습니다.');
+      }
+
+      setAnalysis(data);
+      setShowAnalysis(true);
+    } catch (error) {
+      console.error('Error analyzing learning data:', error);
+      setError(error.message || '분석 중 오류가 발생했습니다.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const renderMath = (text: string) => {
     // LaTeX 수식이 $...$ 또는 $$...$$ 형식으로 되어있는지 확인
     const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/);
@@ -197,9 +233,12 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center gap-4 mb-8">
           <button
-            onClick={() => setShowHistory(!showHistory)}
+            onClick={() => {
+              setShowHistory(!showHistory);
+              setShowAnalysis(false);
+            }}
             className="px-6 py-3 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center gap-2"
           >
             <span>{showHistory ? '문제 생성하기' : '기록 보기'}</span>
@@ -211,9 +250,118 @@ export default function Home() {
               )}
             </svg>
           </button>
+          <button
+            onClick={() => {
+              setShowHistory(false);
+              setShowAnalysis(!showAnalysis);
+              if (!showAnalysis && !analysis) {
+                analyzeLearning();
+              }
+            }}
+            className="px-6 py-3 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center gap-2"
+          >
+            <span>{showAnalysis ? '문제 생성하기' : '학습 분석'}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
         
-        {!showHistory ? (
+        {showAnalysis ? (
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">학습 분석</h2>
+            {isAnalyzing ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                <p className="mt-4 text-gray-600">학습 데이터를 분석하고 있습니다...</p>
+              </div>
+            ) : analysis ? (
+              <div className="space-y-8">
+                <div className="bg-white rounded-2xl shadow-xl p-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">전체 통계</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 rounded-xl p-4">
+                      <p className="text-sm text-blue-600 mb-1">총 문제 수</p>
+                      <p className="text-2xl font-bold text-blue-700">{analysis.overallStats.totalProblems}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-xl p-4">
+                      <p className="text-sm text-green-600 mb-1">평균 정답률</p>
+                      <p className="text-2xl font-bold text-green-700">{analysis.overallStats.averageCorrectRate.toFixed(1)}%</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-xl p-4">
+                      <p className="text-sm text-purple-600 mb-1">자주 푼 주제</p>
+                      <p className="text-lg font-medium text-purple-700">
+                        {analysis.overallStats.mostFrequentTopics.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">강점</h3>
+                    <div className="space-y-4">
+                      {analysis.strengths.map((strength, index) => (
+                        <div key={index} className="bg-green-50 rounded-xl p-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="font-medium text-green-800">{strength.topic}</p>
+                            <p className="text-sm text-green-600">{strength.totalProblems}문제</p>
+                          </div>
+                          <div className="w-full bg-green-200 rounded-full h-2">
+                            <div
+                              className="bg-green-500 h-2 rounded-full"
+                              style={{ width: `${strength.correctRate}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-sm text-green-700 mt-1">정답률: {strength.correctRate.toFixed(1)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">개선 필요</h3>
+                    <div className="space-y-4">
+                      {analysis.weaknesses.map((weakness, index) => (
+                        <div key={index} className="bg-red-50 rounded-xl p-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="font-medium text-red-800">{weakness.topic}</p>
+                            <p className="text-sm text-red-600">{weakness.totalProblems}문제</p>
+                          </div>
+                          <div className="w-full bg-red-200 rounded-full h-2">
+                            <div
+                              className="bg-red-500 h-2 rounded-full"
+                              style={{ width: `${weakness.correctRate}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-sm text-red-700 mt-1">정답률: {weakness.correctRate.toFixed(1)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-xl p-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">학습 추천</h3>
+                  <ul className="space-y-3">
+                    {analysis.recommendations.map((recommendation, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <svg className="h-6 w-6 text-blue-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                        <p className="text-gray-700">{recommendation}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">분석할 문제 기록이 없습니다.</p>
+              </div>
+            )}
+          </div>
+        ) : !showHistory ? (
           <div className="max-w-3xl mx-auto">
             <div id="problem-generation" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
               <div className="mb-6">
