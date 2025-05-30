@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { MathProblem, ProblemDifficulty } from '../types';
+import { MathProblem, ProblemDifficulty, UserStats } from '../types';
 import { saveProblem, getProblemHistory, getUserStats } from '../utils/storage';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
@@ -15,10 +15,16 @@ export default function Home() {
   const [history, setHistory] = useState<MathProblem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState(getUserStats());
+  const [stats, setStats] = useState<UserStats>({
+    totalProblems: 0,
+    correctAnswers: 0,
+    topicStats: {},
+  });
   const [selectedDifficulty, setSelectedDifficulty] = useState<ProblemDifficulty>('similar');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const savedHistory = getProblemHistory();
     setHistory(savedHistory.problems);
     setStats(getUserStats());
@@ -173,33 +179,35 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">학습 통계</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-blue-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-blue-800 mb-2">전체 통계</h3>
-                <p className="text-gray-600">총 문제 수: {stats.totalProblems}</p>
-                <p className="text-gray-600">정답률: {stats.totalProblems > 0 
-                  ? Math.round((stats.correctAnswers / stats.totalProblems) * 100) 
-                  : 0}%</p>
-              </div>
-              <div className="bg-indigo-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-indigo-800 mb-2">주제별 통계</h3>
-                {Object.entries(stats.topicStats).map(([topic, stat]) => (
-                  <div key={topic} className="mb-2">
-                    <p className="text-gray-700 font-medium">{topic}</p>
-                    <p className="text-gray-600">
-                      정답률: {stat.total > 0 
-                        ? Math.round((stat.correct / stat.total) * 100) 
-                        : 0}% ({stat.correct}/{stat.total})
-                    </p>
-                  </div>
-                ))}
+        {isClient && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">학습 통계</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">전체 통계</h3>
+                  <p className="text-gray-600">총 문제 수: {stats.totalProblems}</p>
+                  <p className="text-gray-600">정답률: {stats.totalProblems > 0 
+                    ? Math.round((stats.correctAnswers / stats.totalProblems) * 100) 
+                    : 0}%</p>
+                </div>
+                <div className="bg-indigo-50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">주제별 통계</h3>
+                  {Object.entries(stats.topicStats).map(([topic, stat]) => (
+                    <div key={topic} className="mb-2">
+                      <p className="text-gray-700 font-medium">{topic}</p>
+                      <p className="text-gray-600">
+                        정답률: {stat.total > 0 
+                          ? Math.round((stat.correct / stat.total) * 100) 
+                          : 0}% ({stat.correct}/{stat.total})
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-center mb-8">
           <button
