@@ -1,0 +1,31 @@
+{
+  "name": "mathmind-ai",
+  "version": "1.0.0",
+  "description": "Gemini 기반 수학 문제 생성 및 학습 지원 웹 서비스",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.2.0",
+    "autoprefixer": "^10.4.17",
+    "axios": "^1.6.7",
+    "katex": "^0.16.22",
+    "next": "^14.1.0",
+    "postcss": "^8.4.35",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-katex": "^3.1.0",
+    "tailwindcss": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "@types/react": "^18.2.57",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.0",
+    "typescript": "^5.3.3"
+  }
+}
