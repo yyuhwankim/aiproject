@@ -1,11 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { MathProblem } from '../../types';
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || 'AIzaSyDZ7419rQQowomI7mqQrjxMxvBd0SnbNeo';
-
-// API 클라이언트 초기화
-const genAI = new GoogleGenerativeAI(API_KEY);
+const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export default async function handler(
   req: NextApiRequest,
@@ -64,24 +61,31 @@ ${JSON.stringify(problems, null, 2)}
 5. 반드시 유효한 JSON 형식을 지켜주세요
 `;
 
-    // 모델 초기화 및 설정
-    const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
+    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
     });
 
-    // API 호출
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-    });
+    const data = await response.json();
 
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to generate content');
+    }
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from API');
+    }
+
+    const text = data.candidates[0].content.parts[0].text;
 
     // JSON 문자열에서 실제 JSON 부분만 추출
     const jsonMatch = text.match(/\{[\s\S]*\}/);
