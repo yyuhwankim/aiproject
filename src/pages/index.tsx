@@ -30,32 +30,11 @@ export default function Home() {
   const scrollToElement = (elementId: string) => {
     const element = document.getElementById(elementId);
     if (element) {
-      const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
-      const startPosition = window.pageYOffset;
-      const distance = targetPosition - startPosition;
-      const duration = 1000; // 1초
-      let start: number | null = null;
-
-      const easeInOutCubic = (t: number) => {
-        return t < 0.5
-          ? 4 * t * t * t
-          : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      };
-
-      const animation = (currentTime: number) => {
-        if (start === null) start = currentTime;
-        const timeElapsed = currentTime - start;
-        const progress = Math.min(timeElapsed / duration, 1);
-        const easedProgress = easeInOutCubic(progress);
-        
-        window.scrollTo(0, startPosition + distance * easedProgress);
-
-        if (timeElapsed < duration) {
-          requestAnimationFrame(animation);
-        }
-      };
-
-      requestAnimationFrame(animation);
+      const offset = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: offset,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -92,7 +71,7 @@ export default function Home() {
       setSolution(data.solution);
       setShowSolution(false);
       setIsCorrect(null);
-      setTimeout(() => scrollToElement('problem-section'), 100);
+      setTimeout(() => scrollToElement('problem-generator-section'), 100);
     } catch (error) {
       console.error('Error generating problem:', error);
       setError(error.message || '문제 생성 중 오류가 발생했습니다.');
@@ -222,32 +201,33 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Head>
         <title>MathMind AI - 수학 문제 생성 및 학습</title>
         <meta name="description" content="Gemini 기반 수학 문제 생성 및 학습 지원 웹 서비스" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="flex flex-col items-center mb-12">
-          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+        <div className="flex flex-col items-center mb-8 sm:mb-12 lg:mb-16">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 mb-4 text-center">
             MathMind AI
           </h1>
-          <p className="text-gray-600 text-lg text-center max-w-2xl">
+          <p className="text-gray-600 text-base sm:text-lg lg:text-xl text-center max-w-2xl leading-relaxed">
             AI 기반 수학 문제 생성 및 학습 지원 서비스로 수학 실력을 향상시켜보세요
           </p>
         </div>
 
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8 sm:mb-12">
           <button
             onClick={() => {
               setShowHistory(!showHistory);
               setShowAnalysis(false);
             }}
-            className="px-6 py-3 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center gap-2"
+            className="px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center justify-center gap-2 transform hover:scale-105"
           >
-            <span>{showHistory ? '문제 생성하기' : '기록 보기'}</span>
+            <span className="text-base sm:text-lg">{showHistory ? '문제 생성하기' : '기록 보기'}</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               {showHistory ? (
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
@@ -264,9 +244,9 @@ export default function Home() {
                 analyzeLearning();
               }
             }}
-            className="px-6 py-3 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center gap-2"
+            className="px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-gray-700 hover:text-blue-600 flex items-center justify-center gap-2 transform hover:scale-105"
           >
-            <span>{showAnalysis ? '문제 생성하기' : '학습 분석'}</span>
+            <span className="text-base sm:text-lg">{showAnalysis ? '문제 생성하기' : '학습 분석'}</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
             </svg>
@@ -275,13 +255,13 @@ export default function Home() {
         
         {showAnalysis ? (
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">학습 분석</h2>
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">학습 분석</h2>
                 <button
                   onClick={analyzeLearning}
                   disabled={isAnalyzing}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isAnalyzing ? (
                     <>
@@ -395,57 +375,55 @@ export default function Home() {
           </div>
         ) : !showHistory ? (
           <div className="max-w-3xl mx-auto">
-            <div id="problem-generation" className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <div className="mb-6">
-                <label htmlFor="topic" className="block text-lg font-medium text-gray-700 mb-3">
-                  수학 주제 입력
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="topic"
-                    value={topic}
-                    onChange={(e) => {
-                      setTopic(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder="예: 이차방정식, 미분, 적분 등"
-                    className={`w-full px-6 py-4 text-lg border-2 ${
-                      error ? 'border-red-500' : 'border-gray-200'
-                    } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
-                  />
-                  <button
-                    onClick={generateProblem}
-                    disabled={isLoading}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 ${
-                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>생성 중...</span>
-                      </div>
-                    ) : '문제 생성하기'}
-                  </button>
-                </div>
-                {error && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {error}
-                  </p>
-                )}
+            <div id="problem-generator-section" className="mb-8">
+              <label htmlFor="topic" className="block text-lg sm:text-xl font-medium text-gray-700 mb-3">
+                수학 주제 입력
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => {
+                    setTopic(e.target.value);
+                    setError(null);
+                  }}
+                  placeholder="예: 이차방정식, 미분, 적분 등"
+                  className={`w-full px-6 py-4 text-base sm:text-lg border-2 ${
+                    error ? 'border-red-500' : 'border-gray-200'
+                  } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm`}
+                />
+                <button
+                  onClick={generateProblem}
+                  disabled={isLoading}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 ${
+                    isLoading ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''
+                  }`}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>생성 중...</span>
+                    </div>
+                  ) : '문제 생성하기'}
+                </button>
               </div>
+              {error && (
+                <p className="mt-2 text-sm text-red-600">
+                  {error}
+                </p>
+              )}
             </div>
 
             {problem && (
-              <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 sm:p-8 transform transition-all duration-300 hover:shadow-2xl">
                 <div id="problem-section" className="mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">문제</h2>
-                  <div className="bg-gray-50 rounded-xl p-6">
-                    <div className="text-lg text-gray-700 whitespace-pre-wrap">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">문제</h2>
+                  <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-6">
+                    <div className="text-lg sm:text-xl text-gray-700 whitespace-pre-wrap">
                       {renderMath(problem)}
                     </div>
                   </div>
@@ -462,14 +440,14 @@ export default function Home() {
 
                 {showSolution && (
                   <div id="solution-section" className="mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">해답</h2>
-                    <div className="bg-gray-50 rounded-xl p-6 mb-8">
-                      <div className="text-lg text-gray-700 whitespace-pre-wrap">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">해답</h2>
+                    <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-6 mb-8">
+                      <div className="text-lg sm:text-xl text-gray-700 whitespace-pre-wrap">
                         {renderMath(solution)}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button
                         onClick={() => handleCorrectness(true)}
                         className="px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 transform hover:scale-105"
@@ -488,40 +466,40 @@ export default function Home() {
 
                 {isCorrect !== null && (
                   <div className="text-center mt-12">
-                    <p className={`text-xl font-semibold mb-4 ${
+                    <p className={`text-xl sm:text-2xl font-semibold mb-4 ${
                       isCorrect ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {isCorrect ? '정답입니다! 🎉' : '다시 한번 도전해보세요! 💪'}
                     </p>
-                    <div id="difficulty-section" className="mb-4">
-                      <p className="text-gray-700 mb-2">문제 난이도를 선택해주세요:</p>
-                      <div className="flex justify-center gap-4">
+                    <div id="difficulty-section" className="mb-6">
+                      <p className="text-gray-700 mb-3 text-lg">문제 난이도를 선택해주세요:</p>
+                      <div className="flex flex-wrap justify-center gap-3">
                         <button
                           onClick={() => handleDifficultySelect('easy')}
-                          className={`px-4 py-2 rounded-lg ${
+                          className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
                             selectedDifficulty === 'easy'
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
                           쉬운 문제
                         </button>
                         <button
                           onClick={() => handleDifficultySelect('similar')}
-                          className={`px-4 py-2 rounded-lg ${
+                          className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
                             selectedDifficulty === 'similar'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
                           비슷한 문제
                         </button>
                         <button
                           onClick={() => handleDifficultySelect('hard')}
-                          className={`px-4 py-2 rounded-lg ${
+                          className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 ${
                             selectedDifficulty === 'hard'
-                              ? 'bg-red-500 text-white'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
                           어려운 문제
@@ -530,7 +508,10 @@ export default function Home() {
                     </div>
                     <div id="retry-section">
                       <button
-                        onClick={() => generateSimilarProblem(problem)}
+                        onClick={() => {
+                          generateSimilarProblem(problem);
+                          setTimeout(() => scrollToElement('problem-generator-section'), 100);
+                        }}
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105"
                       >
                         <span>문제 다시 풀기</span>
@@ -549,8 +530,8 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">문제 기록</h2>
             <div className="grid gap-6">
               {history.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300">
-                  <div className="flex justify-between items-start mb-4">
+                <div key={item.id} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                     <span className="text-sm text-gray-500">
                       {new Date(item.timestamp).toLocaleString()}
                     </span>
@@ -568,7 +549,7 @@ export default function Home() {
                     onClick={() => {
                       setShowHistory(false);
                       generateSimilarProblem(item.problem);
-                      setTimeout(scrollToElement, 100);
+                      setTimeout(() => scrollToElement('problem-generator-section'), 100);
                     }}
                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
                   >
@@ -590,7 +571,7 @@ export default function Home() {
       </main>
 
       {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 animate-fade-in">
           <div className="flex items-center">
             <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
