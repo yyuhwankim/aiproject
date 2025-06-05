@@ -200,6 +200,13 @@ export default function Home() {
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      generateProblem();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Head>
@@ -388,6 +395,11 @@ export default function Home() {
                     setTopic(e.target.value);
                     setError(null);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isLoading) {
+                      generateProblem();
+                    }
+                  }}
                   placeholder="예: 이차방정식, 미분, 적분 등"
                   className={`w-full px-6 py-4 text-base sm:text-lg border-2 ${
                     error ? 'border-red-500' : 'border-gray-200'
@@ -411,11 +423,6 @@ export default function Home() {
                   ) : '문제 생성하기'}
                 </button>
               </div>
-              {error && (
-                <p className="mt-2 text-sm text-red-600">
-                  {error}
-                </p>
-              )}
             </div>
 
             {problem && (
